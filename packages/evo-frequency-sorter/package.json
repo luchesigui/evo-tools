@@ -1,5 +1,5 @@
 {
-  "name": "evo-match-making",
+  "name": "evo-frequency-sorter",
   "version": "1.0.0",
   "description": "Alunos filtering and lead matching tool",
   "private": true,
