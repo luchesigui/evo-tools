@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ambientes virtuais
+venv/
+env/
+.env
+
+# Arquivos gerados ou temporários
+*.log
+*.sqlite3
+.DS_Store # macOS
+Thumbs.db # Windows
+*.xlsx

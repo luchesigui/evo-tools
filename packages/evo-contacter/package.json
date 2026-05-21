@@ -1,0 +1,22 @@
+{
+  "name": "evo-contacter",
+  "version": "1.0.0",
+  "description": "Web scraper for Evo5 system",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "puppeteer": "^22.8.2",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.0.0",
+    "vitest": "^1.0.0"
+  }
+}
