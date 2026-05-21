@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { delay } from "../../helpers/browser.js";
+import { delay } from "evo-puppeteer";
 
 describe("Integration Tests", () => {
   describe("Basic functionality", () => {

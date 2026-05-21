@@ -1,4 +1,4 @@
-import { delay, waitAndClick } from "../helpers/browser.js";
+import { searchContact } from "evo-puppeteer";
 import {
   addToCommunicatedIds,
   addToNonExistentClients,
@@ -8,20 +8,10 @@ import {
   sendEmailMarketing,
   sendEmailMarketingToClient,
 } from "./email-marketing.js";
-import {
-  checkIfItIsClient,
-  sendGeneralMessage,
-  sendMessageToClient,
-} from "./messaging.js";
 
 const IS_DEBUG_ACTIVE = true;
 
-export const CommunicationTypes = Object.freeze({
-  EMAIL: "email",
-  MESSAGING: "messaging",
-});
-
-async function sendMessage(page, id, typeOfCommunication) {
+async function sendEmailToContact(page, id) {
   try {
     console.log(`Processing ID: ${id}`);
 
@@ -32,51 +22,25 @@ async function sendMessage(page, id, typeOfCommunication) {
       return true;
     }
 
-    // Search for the contact
-    await waitAndClick(page, "#evoAutocomplete");
-    await page.type("#evoAutocomplete", id.toString(), { delay: 20 });
+    // Search and select contact using the generic package
+    const { success, isClient } = await searchContact(page, id);
 
-    let noResults = false;
-    try {
-      await page.waitForSelector(".item-lista", { timeout: 5000 });
-    } catch (error) {
-      noResults = true;
-    }
-
-    if (noResults) {
-      console.log(`No results found for ID: ${id}`);
-      await page.evaluate(() => {
-        const closeButton = document.querySelector(".icone-close-cliente");
-        if (closeButton) {
-          closeButton.click();
-        }
-      });
-
+    if (!success) {
       addToNonExistentClients(id);
     } else {
-      await waitAndClick(page, ".item-lista");
-      await delay(1000);
-      await page.waitForSelector(".md-toolbar-tools a");
-      const isClient = await checkIfItIsClient(page);
-
       if (isClient) {
-        await (typeOfCommunication === CommunicationTypes.EMAIL
-          ? sendEmailMarketingToClient(page, id)
-          : sendMessageToClient(page, id));
+        await sendEmailMarketingToClient(page, id);
       } else {
-        await (typeOfCommunication === CommunicationTypes.EMAIL
-          ? sendEmailMarketing(page, id)
-          : sendGeneralMessage(page, id));
+        await sendEmailMarketing(page, id);
       }
-
-      console.log(`Message sent successfully for ID: ${id}`);
+      console.log(`Email sent successfully for ID: ${id}`);
     }
 
     // Escreve o id no arquivo após sucesso
     addToCommunicatedIds(id);
     return true;
   } catch (error) {
-    console.error("Failed to send message for ID:", id);
+    console.error("Failed to send email for ID:", id);
 
     if (IS_DEBUG_ACTIVE) {
       console.error("Error details:", error, "\n\n");
@@ -86,4 +50,4 @@ async function sendMessage(page, id, typeOfCommunication) {
   }
 }
 
-export { sendMessage };
+export { sendEmailToContact };

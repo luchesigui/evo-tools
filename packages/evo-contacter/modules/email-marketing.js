@@ -1,4 +1,4 @@
-import { delay, waitAndClick } from "../helpers/browser.js";
+import { delay, waitAndClick } from "evo-puppeteer";
 import { envVariablesShouldExist } from "../helpers/envValidator.js";
 
 envVariablesShouldExist(["EMAIL_TEMPLATE_NAME"]);

@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "dotenv": "^17.2.1",
-    "puppeteer": "^22.8.2",
+    "evo-puppeteer": "*",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

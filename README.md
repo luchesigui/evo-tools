@@ -1,108 +1,95 @@
 # EvoTools
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+O **EvoTools** é um monorepo contendo ferramentas de automação, web-scraping e processamento de dados projetadas para se integrarem com o sistema de gestão de academias **Evo5**.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+O workspace é estruturado com o [Nx](https://nx.dev) e utiliza npm workspaces para gerenciar seus pacotes.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/npm-workspaces-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+---
 
-## Run tasks
+## 📦 Visão Geral dos Pacotes
 
-To run tasks with Nx use:
+O repositório é dividido em três pacotes especializados, cada um responsável por uma parte do fluxo de trabalho:
 
-```sh
-npx nx <target> <project-name>
+| Pacote | Tecnologia | Descrição | Caminho |
+| :--- | :--- | :--- | :--- |
+| [**`evo-puppeteer`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-puppeteer) | Node.js (Puppeteer) | Biblioteca compartilhada que fornece ações comuns de navegação e automação no painel do Evo5 (como login automatizado e busca de contatos). | `packages/evo-puppeteer` |
+| [**`evo-contacter`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-contacter) | Node.js (Puppeteer) | Utilitário que utiliza o `evo-puppeteer` para automatizar o envio de e-mails de comunicação para listas de IDs de membros da academia. | `packages/evo-contacter` |
+| [**`evo-frequency-sorter`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-frequency-sorter) | Python (Pandas) | Script de processamento de dados que filtra planilhas de frequência de acesso para segmentar alunos regulares de agregadores (Wellhub, Totalpass) e VIPs. | `packages/evo-frequency-sorter` |
+
+---
+
+## 🚀 Como Começar
+
+### 1. Pré-requisitos
+- **Node.js** (v18+ recomendado)
+- **Python** (v3.7+ para processamento de dados)
+- **npm** (v7+ com suporte a workspaces)
+
+### 2. Instalação
+
+Instale todas as dependências Node.js do workspace executando o comando a partir da pasta raiz:
+```bash
+npm install
 ```
 
-For example:
-
-```sh
-npx nx build myproject
+Para configurar o ambiente virtual do Python e instalar as dependências do `evo-frequency-sorter`, execute:
+```bash
+npm run --prefix packages/evo-frequency-sorter install
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+---
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 🛠️ Guias dos Pacotes
 
-## Versioning and releasing
+### 1. `evo-puppeteer` (Automação Compartilhada com Puppeteer)
+Este é um pacote de utilitários compartilhado. Outros projetos Node do workspace o utilizam como dependência direta.
+- **Funcionalidades principais**: Inicialização de navegador (modo headless/headful), fluxo de autenticação no portal, busca de membros e validação de status.
+- Para detalhes de configuração, veja o diretório [evo-puppeteer](file:///Users/luchesigui/Dev/evo-tools/packages/evo-puppeteer).
 
-To version and release the library use
+### 2. `evo-contacter` (Comunicações Automatizadas)
+Automatiza o envio de e-mails para um lote específico de IDs de clientes.
+- **Como Usar**:
+  1. Configure o arquivo `.env` dentro da pasta `packages/evo-contacter` com as credenciais de login e as variáveis de ambiente necessárias.
+  2. Execute o script de contato:
+     ```bash
+     npx nx start evo-contacter
+     ```
+  3. O script abrirá o painel do Evo, fará login automaticamente, filtrará os IDs que necessitam de comunicação e enviará os e-mails um por um.
+- Para mais detalhes, consulte o [README do evo-contacter](file:///Users/luchesigui/Dev/evo-tools/packages/evo-contacter/README.md).
 
+### 3. `evo-frequency-sorter` (Triagem e Segmentação de Acessos)
+Divide as planilhas de frequências exportadas em arquivos distintos para campanhas de marketing e controle operacional direcionados.
+- **Entrada**: Planilha (Excel ou CSV) contendo o registro de frequência.
+- **Saídas**:
+  - `*acessos-alunos.xlsx` (Membros regulares da academia).
+  - `*acessos-agregadores.xlsx` (Agregadores de benefícios corporativos, ex: Wellhub e Totalpass).
+- **Como Usar**:
+  1. Insira a planilha de entrada (ex: `FREQUENCIA.xlsx`) dentro do diretório do pacote.
+  2. Execute o script de filtragem:
+     ```bash
+     npx nx start evo-frequency-sorter
+     ```
+- Para mais detalhes, consulte o [README do evo-frequency-sorter](file:///Users/luchesigui/Dev/evo-tools/packages/evo-frequency-sorter/README.md).
+
+---
+
+## 🧩 Recursos do Workspace Nx
+
+Este monorepo utiliza o Nx para orquestração de tarefas e controle de releases.
+
+### Execução de Tarefas
+Para executar um script em um pacote específico, utilize:
+```bash
+npx nx <target> <package-name>
+# Exemplo: Rodar testes do evo-contacter
+npx nx test evo-contacter
 ```
+
+### Versionamento e Releases
+Para gerenciar o versionamento e release dos pacotes:
+```bash
 npx nx release
 ```
+Use o parâmetro `--dry-run` para simular o processo de release sem commitar ou publicar.
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
-
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Add new projects
-
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
-```
-
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
-
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
-
-# Generate a library
-npx nx g @nx/react:lib some-lib
-```
-
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
-
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
-```
-
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/npm-workspaces-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+---

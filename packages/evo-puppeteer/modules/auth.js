@@ -1,6 +1,9 @@
 import { delay, waitAndClick } from "../helpers/browser.js";
 
-async function login(page) {
+async function loginToEvo(page, username, password) {
+  const user = username || process.env.EVO_USER || "gui.olhenrique@gmail.com";
+  const pass = password || process.env.EVO_PASS || "dbt8rzu3RKP2fyd-aqd";
+
   try {
     // Navigate to the login page
     await page.goto(
@@ -12,10 +15,10 @@ async function login(page) {
     await waitAndClick(page, "#usuario");
 
     // Fill in the login credentials
-    await page.type("#usuario", "gui.olhenrique@gmail.com", { delay: 20 });
+    await page.type("#usuario", user, { delay: 20 });
 
     await waitAndClick(page, "#senha");
-    await page.type("#senha", "dbt8rzu3RKP2fyd-aqd", { delay: 20 });
+    await page.type("#senha", pass, { delay: 20 });
 
     // Click the login button
     await waitAndClick(page, 'button[type="submit"]');
@@ -31,4 +34,4 @@ async function login(page) {
   }
 }
 
-export { login };
+export { loginToEvo };

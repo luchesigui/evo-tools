@@ -1,33 +1,33 @@
 # Evo5 Web Scraper
 
-This is a web scraper built with Puppeteer.js to automate the login process for the Evo5 system.
+Este é um scraper web construído com Puppeteer.js para automatizar o processo de login no sistema Evo5.
 
-## Setup
+## Configuração
 
-1. Make sure you have Node.js installed on your system
-2. Install the dependencies:
+1. Certifique-se de ter o Node.js instalado em seu sistema
+2. Instale as dependências:
 
 ```bash
 npm install
 ```
 
-## Running the Script
+## Executando o Script
 
-To run the script, use:
+Para executar o script, use:
 
 ```bash
 npm start
 ```
 
-The script will:
+O script irá:
 
-1. Open a Chrome browser window
-2. Navigate to the login page
-3. Automatically fill in the login credentials
-4. Submit the form
+1. Abrir uma janela do navegador Chrome
+2. Navegar até a página de login
+3. Preencher automaticamente as credenciais de login
+4. Enviar o formulário
 
-## Notes
+## Notas
 
-- The browser window will remain open after login for debugging purposes
-- To close the browser automatically, uncomment the `await browser.close();` line in the code
-- To run in headless mode (no visible browser), change `headless: false` to `headless: true` in the code
+- A janela do navegador permanecerá aberta após o login para fins de depuração
+- Para fechar o navegador automaticamente, descomente a linha `await browser.close();` no código
+- Para executar no modo headless (sem navegador visível), altere `headless: false` para `headless: true` no código
