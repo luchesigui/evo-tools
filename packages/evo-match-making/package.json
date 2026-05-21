@@ -1,0 +1,11 @@
+{
+  "name": "evo-match-making",
+  "version": "1.0.0",
+  "description": "Alunos filtering and lead matching tool",
+  "private": true,
+  "scripts": {
+    "install": "python3 -m venv venv && ./venv/bin/pip install -r requirements.txt",
+    "start": "./venv/bin/python divide-alunos-e-agregadores.py",
+    "clean": "rm -rf __pycache__ .pytest_cache venv"
+  }
+}
