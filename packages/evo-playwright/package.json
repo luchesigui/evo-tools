@@ -1,0 +1,17 @@
+{
+  "name": "evo-playwright",
+  "version": "1.0.0",
+  "description": "Generic Playwright interaction with the Evo5 system for RPA",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "playwright": "^1.43.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
+  }
+}

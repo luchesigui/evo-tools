@@ -6,12 +6,14 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
+    "start:playwright": "node index.playwright.js",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "dotenv": "^17.2.1",
+    "evo-playwright": "*",
     "evo-puppeteer": "*",
     "xlsx": "^0.18.5"
   },

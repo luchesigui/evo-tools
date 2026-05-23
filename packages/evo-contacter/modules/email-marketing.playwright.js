@@ -1,4 +1,4 @@
-import { delay, waitAndClick } from "evo-puppeteer";
+import { delay, waitAndClick } from "evo-playwright";
 import { envVariablesShouldExist } from "../helpers/envValidator.js";
 
 envVariablesShouldExist(["EMAIL_TEMPLATE_NAME"]);
@@ -48,7 +48,7 @@ export async function sendEmailMarketing(page, id, isClient) {
   await delay(1000);
 
   if (EMAIL_SUBJECT) {
-    await page.type("#assuntoEmail", EMAIL_SUBJECT);
+    await page.fill("#assuntoEmail", EMAIL_SUBJECT);
   }
 
   await waitAndClick(

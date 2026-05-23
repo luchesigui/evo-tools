@@ -1,0 +1,19 @@
+{
+  "name": "evo-report-extracter",
+  "version": "1.0.0",
+  "description": "Extracts opportunities report from the Evo5 system",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "evo-puppeteer": "*"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
+  }
+}

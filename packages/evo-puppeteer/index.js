@@ -2,10 +2,17 @@ import puppeteer from "puppeteer";
 import { delay, waitAndClick } from "./helpers/browser.js";
 import { loginToEvo } from "./modules/auth.js";
 import { checkIfItIsClient, searchContact } from "./modules/search.js";
+import {
+  navigateToOpportunities,
+  selectDateInKendo,
+  uncheckEspeciais,
+  triggerSearch,
+  triggerExport,
+} from "./modules/opportunities.js";
 
 async function launchEvoBrowser(options = {}) {
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false,
     defaultViewport: null,
     args: ["--start-maximized"],
     timeout: 60000,
@@ -27,4 +34,9 @@ export {
   checkIfItIsClient,
   delay,
   waitAndClick,
+  navigateToOpportunities,
+  selectDateInKendo,
+  uncheckEspeciais,
+  triggerSearch,
+  triggerExport,
 };

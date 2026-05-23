@@ -16,19 +16,19 @@ async function loginToEvo(page, username, password) {
 
     // Wait for the login form to be loaded
     await delay(1000);
-    await waitAndClick(page, "#usuario");
+    
+    // Use pressSequentially with delay to trigger Angular's input event listeners correctly
+    await waitAndClick(page, "input#usuario");
+    await page.locator("input#usuario").pressSequentially(user, { delay: 20 });
 
-    // Fill in the login credentials
-    await page.type("#usuario", user, { delay: 20 });
-
-    await waitAndClick(page, "#senha");
-    await page.type("#senha", pass, { delay: 20 });
+    await waitAndClick(page, "input#senha");
+    await page.locator("input#senha").pressSequentially(pass, { delay: 20 });
 
     // Click the login button
     await waitAndClick(page, 'button[type="submit"]');
 
-    // Wait for navigation after login
-    await page.waitForNavigation();
+    // Wait for the dashboard search field to appear (indicates successful login)
+    await page.waitForSelector("#evoAutocomplete", { timeout: 30000 });
 
     console.log("Login successful!");
     return true;
