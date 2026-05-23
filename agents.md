@@ -28,8 +28,8 @@ Com o tempo, o EvoTools se expandirá para incluir:
 
 Cada pacote no repositório resolve uma dor de negócio específica:
 
-### 1. `evo-puppeteer` (Núcleo de Interação)
-- **O que faz**: É a biblioteca base de automação web.
+### 1. `evo-playwright` (Núcleo de Interação)
+- **O que faz**: É a biblioteca base de automação web com Playwright.
 - **Objetivo de Negócio**: Centralizar o conhecimento técnico de navegação no portal do Evo5. Ele cuida do login e de buscas de clientes de forma genérica para que outros scripts não precisem reimplementar a lógica de scraping.
 
 ### 2. `evo-contacter` (Automação de Contatos)
@@ -45,5 +45,5 @@ Cada pacote no repositório resolve uma dor de negócio específica:
 ## 🛠️ Regras de Dependência e Desenvolvimento
 
 Ao sugerir ou implementar alterações de código, respeite estas regras:
-- **Não Duplicar Lógica de Navegação**: Qualquer nova funcionalidade que precise fazer login ou navegar no painel web do Evo deve estender o `evo-puppeteer` em vez de criar novas instâncias ou seletores de Puppeteer no `evo-contacter`.
+- **Não Duplicar Lógica de Navegação**: Qualquer nova funcionalidade que precise fazer login ou navegar no painel web do Evo deve estender o `evo-playwright` em vez de criar novas instâncias ou seletores de Playwright no `evo-contacter`.
 - **Nx Monorepo**: O repositório utiliza o Nx. Ao testar ou rodar os pacotes, utilize comandos do Nx (`npx nx <target> <project>`) a partir da raiz.

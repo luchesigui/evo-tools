@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 // Load environment variables first, before any other imports
 dotenv.config();
 
-import { launchEvoBrowser, loginToEvo, delay } from "evo-puppeteer";
+import { launchEvoBrowser, loginToEvo, delay } from "evo-playwright";
 import { getIdsBasedOnEnvironment } from "./helpers/environmentHelper.js";
 import {
   getAlreadyCommunicatedIds,

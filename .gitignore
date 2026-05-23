@@ -46,3 +46,7 @@ Thumbs.db
 # RPA / Scraping Downloads
 **/downloads/
 
+# Secrets and Credentials
+**/.env
+
+

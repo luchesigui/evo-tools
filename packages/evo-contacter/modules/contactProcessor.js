@@ -1,4 +1,4 @@
-import { searchContact } from "evo-puppeteer";
+import { searchContact } from "evo-playwright";
 import {
   addToCommunicatedIds,
   addToNonExistentClients,

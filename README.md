@@ -12,8 +12,8 @@ O repositório é dividido em três pacotes especializados, cada um responsável
 
 | Pacote | Tecnologia | Descrição | Caminho |
 | :--- | :--- | :--- | :--- |
-| [**`evo-puppeteer`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-puppeteer) | Node.js (Puppeteer) | Biblioteca compartilhada que fornece ações comuns de navegação e automação no painel do Evo5 (como login automatizado e busca de contatos). | `packages/evo-puppeteer` |
-| [**`evo-contacter`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-contacter) | Node.js (Puppeteer) | Utilitário que utiliza o `evo-puppeteer` para automatizar o envio de e-mails de comunicação para listas de IDs de membros da academia. | `packages/evo-contacter` |
+| [**`evo-playwright`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-playwright) | Node.js (Playwright) | Biblioteca compartilhada que fornece ações comuns de navegação e automação no painel do Evo5 (como login automatizado e busca de contatos). | `packages/evo-playwright` |
+| [**`evo-contacter`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-contacter) | Node.js (Playwright) | Utilitário que utiliza o `evo-playwright` para automatizar o envio de e-mails de comunicação para listas de IDs de membros da academia. | `packages/evo-contacter` |
 | [**`evo-frequency-sorter`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-frequency-sorter) | Python (Pandas) | Script de processamento de dados que filtra planilhas de frequência de acesso para segmentar alunos regulares de agregadores (Wellhub, Totalpass) e VIPs. | `packages/evo-frequency-sorter` |
 
 ---
@@ -41,10 +41,10 @@ npm run --prefix packages/evo-frequency-sorter install
 
 ## 🛠️ Guias dos Pacotes
 
-### 1. `evo-puppeteer` (Automação Compartilhada com Puppeteer)
+### 1. `evo-playwright` (Automação Compartilhada com Playwright)
 Este é um pacote de utilitários compartilhado. Outros projetos Node do workspace o utilizam como dependência direta.
 - **Funcionalidades principais**: Inicialização de navegador (modo headless/headful), fluxo de autenticação no portal, busca de membros e validação de status.
-- Para detalhes de configuração, veja o diretório [evo-puppeteer](file:///Users/luchesigui/Dev/evo-tools/packages/evo-puppeteer).
+- Para detalhes de configuração, veja o diretório [evo-playwright](file:///Users/luchesigui/Dev/evo-tools/packages/evo-playwright).
 
 ### 2. `evo-contacter` (Comunicações Automatizadas)
 Automatiza o envio de e-mails para um lote específico de IDs de clientes.

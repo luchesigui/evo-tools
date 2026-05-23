@@ -21,7 +21,7 @@ import {
   triggerSearch,
   triggerExport,
   delay
-} from "evo-puppeteer";
+} from "evo-playwright";
 import { getLastWeekRange } from "./helpers/dateHelper.js";
 
 const DEBUG = process.env.DEBUG === "true";
@@ -59,12 +59,7 @@ async function main() {
       });
     }
 
-    // Configure Chrome DevTools Protocol to allow file downloads in headless mode
-    const client = await page.target().createCDPSession();
-    await client.send("Page.setDownloadBehavior", {
-      behavior: "allow",
-      downloadPath: DOWNLOAD_DIR,
-    });
+    // (Playwright handles download behavior natively at context/event level)
 
     console.log("Logging into Evo5...");
     const loginSuccess = await loginToEvo(page);
@@ -126,34 +121,17 @@ async function main() {
       await page.screenshot({ path: path.join(DOWNLOAD_DIR, "debug_3_search_results.png") });
     }
 
-    // Click Exportar
+    // Click Exportar and wait for Playwright download event
     console.log("Clicking Exportar button...");
-    await triggerExport(contentFrame);
+    const [download] = await Promise.all([
+      page.waitForEvent("download", { timeout: 60000 }),
+      triggerExport(contentFrame),
+    ]);
 
-    // Wait for download to complete
     console.log("Waiting for Excel spreadsheet download to complete...");
-    const timeout = 60000;
-    const startTime = Date.now();
-    let fileName = null;
-
-    while (Date.now() - startTime < timeout) {
-      const files = fs.readdirSync(DOWNLOAD_DIR);
-      // Filter out files that are active downloads (.crdownload / .tmp) or debug images
-      const activeDownloads = files.filter(f => f.endsWith(".crdownload") || f.endsWith(".tmp"));
-      const completedFiles = files.filter(f => f.endsWith(".xlsx") && !f.startsWith("debug_"));
-
-      if (completedFiles.length > 0 && activeDownloads.length === 0) {
-        fileName = completedFiles[0];
-        break;
-      }
-      await delay(1000);
-    }
-
-    if (!fileName) {
-      throw new Error("File download timed out or failed (no Excel file was saved)");
-    }
-
+    const fileName = download.suggestedFilename();
     const filePath = path.join(DOWNLOAD_DIR, fileName);
+    await download.saveAs(filePath);
     const stats = fs.statSync(filePath);
     console.log("-----------------------------------------");
     console.log("Extraction completed successfully!");

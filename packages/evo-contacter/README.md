@@ -1,6 +1,6 @@
 # Evo5 Web Scraper
 
-Este é um scraper web construído com Puppeteer.js para automatizar o processo de login no sistema Evo5.
+Este é um scraper web construído com Playwright para automatizar o processo de login no sistema Evo5.
 
 ## Configuração
 

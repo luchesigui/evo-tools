@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "dotenv": "^17.2.1",
-    "evo-puppeteer": "*"
+    "evo-playwright": "*"
   },
   "devDependencies": {
     "vitest": "^1.0.0"

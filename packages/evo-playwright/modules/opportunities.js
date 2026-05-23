@@ -8,12 +8,12 @@ const MONTHS_PT = [
 /**
  * Navigates to the Opportunities page from the dashboard
  * by typing "Oportunidade" in the sidebar search and clicking the item under Gerencial.
- * @param {import("puppeteer").Page} page 
+ * @param {import("playwright").Page} page 
  */
 async function navigateToOpportunities(page) {
   const searchSelector = "input[placeholder*='Pesquisar no menu']";
   await page.waitForSelector(searchSelector, { timeout: 15000 });
-  await page.type(searchSelector, "Oportunidade", { delay: 100 });
+  await page.locator(searchSelector).pressSequentially("Oportunidade", { delay: 100 });
   await delay(3000);
 
   const clicked = await page.evaluate(() => {
@@ -44,7 +44,7 @@ async function navigateToOpportunities(page) {
 /**
  * Dynamically selects a target date in the Kendo UI datepicker calendar.
  * If the calendar opens in the wrong month, it clicks prev/next buttons until it matches.
- * @param {import("puppeteer").Frame} frame 
+ * @param {import("playwright").Frame} frame 
  * @param {string} inputId The ID of the input element (e.g. "dtini", "dtfim")
  * @param {Date} targetDate The date to select
  * @param {number} delayMs Delay between steps to allow transition animations
@@ -122,7 +122,7 @@ async function selectDateInKendo(frame, inputId, targetDate, delayMs = 1000) {
   }
   
   // Select the day cell
-  const clickedDay = await frame.evaluate((dvId, dayStr) => {
+  const clickedDay = await frame.evaluate(({ dvId, dayStr }) => {
     const dv = document.querySelector(dvId);
     if (!dv) return false;
     
@@ -138,7 +138,7 @@ async function selectDateInKendo(frame, inputId, targetDate, delayMs = 1000) {
       return true;
     }
     return false;
-  }, dateviewId, targetDay);
+  }, { dvId: dateviewId, dayStr: targetDay });
   
   if (!clickedDay) {
     throw new Error(`Could not click on day cell ${targetDay} in calendar popup #${inputId}_dateview`);
@@ -149,7 +149,7 @@ async function selectDateInKendo(frame, inputId, targetDate, delayMs = 1000) {
 
 /**
  * Unchecks the "Contabilizar especiais" checkbox in the frame.
- * @param {import("puppeteer").Frame} frame 
+ * @param {import("playwright").Frame} frame 
  */
 async function uncheckEspeciais(frame) {
   const result = await frame.evaluate(() => {
@@ -171,7 +171,7 @@ async function uncheckEspeciais(frame) {
 
 /**
  * Clicks the magnifying glass search button.
- * @param {import("puppeteer").Frame} frame 
+ * @param {import("playwright").Frame} frame 
  */
 async function triggerSearch(frame) {
   const selector = "#btnPesquisar";
@@ -181,7 +181,7 @@ async function triggerSearch(frame) {
 
 /**
  * Clicks the "Exportar" button to download spreadsheet.
- * @param {import("puppeteer").Frame} frame 
+ * @param {import("playwright").Frame} frame 
  */
 async function triggerExport(frame) {
   const selector = "button.k-grid-excel";

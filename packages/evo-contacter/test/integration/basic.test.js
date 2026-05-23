@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { delay } from "evo-puppeteer";
+import { delay } from "evo-playwright";
 
 describe("Integration Tests", () => {
   describe("Basic functionality", () => {

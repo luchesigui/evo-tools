@@ -2,6 +2,13 @@ import { chromium } from "playwright";
 import { delay, waitAndClick } from "./helpers/browser.js";
 import { loginToEvo } from "./modules/auth.js";
 import { checkIfItIsClient, searchContact } from "./modules/search.js";
+import {
+  navigateToOpportunities,
+  selectDateInKendo,
+  uncheckEspeciais,
+  triggerSearch,
+  triggerExport,
+} from "./modules/opportunities.js";
 
 async function launchEvoBrowser(options = {}) {
   const browser = await chromium.launch({
@@ -29,4 +36,9 @@ export {
   checkIfItIsClient,
   delay,
   waitAndClick,
+  navigateToOpportunities,
+  selectDateInKendo,
+  uncheckEspeciais,
+  triggerSearch,
+  triggerExport,
 };
