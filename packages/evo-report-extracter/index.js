@@ -2,8 +2,15 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 
-// Load environment variables first
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from local, root, or evo-playwright .env fallback
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../evo-playwright/.env") });
 
 import {
   launchEvoBrowser,
