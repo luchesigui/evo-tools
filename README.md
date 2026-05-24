@@ -14,6 +14,7 @@ O repositório é dividido em três pacotes especializados, cada um responsável
 | :--- | :--- | :--- | :--- |
 | [**`evo-playwright`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-playwright) | Node.js (Playwright) | Biblioteca compartilhada que fornece ações comuns de navegação e automação no painel do Evo5 (como login automatizado e busca de contatos). | `packages/evo-playwright` |
 | [**`evo-contacter`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-contacter) | Node.js (Playwright) | Utilitário que utiliza o `evo-playwright` para automatizar o envio de e-mails de comunicação para listas de IDs de membros da academia. | `packages/evo-contacter` |
+| [**`evo-report-extracter`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-report-extracter) | Node.js (Playwright) | Utilitário de automação RPA para extrair e baixar relatórios específicos (ex: conversão) do Evo5 em formato Excel. | `packages/evo-report-extracter` |
 | [**`evo-frequency-sorter`**](file:///Users/luchesigui/Dev/evo-tools/packages/evo-frequency-sorter) | Python (Pandas) | Script de processamento de dados que filtra planilhas de frequência de acesso para segmentar alunos regulares de agregadores (Wellhub, Totalpass) e VIPs. | `packages/evo-frequency-sorter` |
 
 ---
@@ -70,6 +71,16 @@ Divide as planilhas de frequências exportadas em arquivos distintos para campan
      npx nx start evo-frequency-sorter
      ```
 - Para mais detalhes, consulte o [README do evo-frequency-sorter](file:///Users/luchesigui/Dev/evo-tools/packages/evo-frequency-sorter/README.md).
+
+### 4. `evo-report-extracter` (Extração de Relatórios do Evo)
+Automatiza a extração e o download de relatórios específicos do portal do Evo5, salvando os resultados Excel na pasta `downloads/`.
+- **Como Usar**:
+  1. Configure as credenciais no arquivo `.env`.
+  2. Execute a extração passando o nome do relatório desejado no parâmetro `--args` (ex: `conversion` para o relatório de oportunidades):
+     ```bash
+     npx nx start evo-report-extracter --args="conversion"
+     ```
+- Para mais detalhes, consulte o [README do evo-report-extracter](file:///Users/luchesigui/Dev/evo-tools/packages/evo-report-extracter/README.md).
 
 ---
 

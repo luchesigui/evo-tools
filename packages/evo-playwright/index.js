@@ -2,13 +2,14 @@ import { chromium } from "playwright";
 import { delay, waitAndClick } from "./helpers/browser.js";
 import { loginToEvo } from "./modules/auth.js";
 import { checkIfItIsClient, searchContact } from "./modules/search.js";
+import { navigateToOpportunities } from "./modules/opportunities.js";
 import {
-  navigateToOpportunities,
-  selectDateInKendo,
+  selectDateInDatePicker,
   uncheckEspeciais,
   triggerSearch,
   triggerExport,
-} from "./modules/opportunities.js";
+} from "./modules/date-picker.js";
+import { getLastWeekRange } from "./helpers/dateHelper.js";
 
 async function launchEvoBrowser(options = {}) {
   const browser = await chromium.launch({
@@ -37,8 +38,10 @@ export {
   delay,
   waitAndClick,
   navigateToOpportunities,
-  selectDateInKendo,
+  selectDateInDatePicker,
   uncheckEspeciais,
   triggerSearch,
   triggerExport,
+  getLastWeekRange,
 };
+
