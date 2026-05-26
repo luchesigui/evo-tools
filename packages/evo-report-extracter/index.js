@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { parseReportType } from "./helpers/cli.js";
 import { run as runConversion } from "./reports/conversion/index.js";
+import { run as runAulasExperimentais } from "./reports/aulas-experimentais/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,7 +15,7 @@ dotenv.config({ path: path.resolve(__dirname, "../evo-playwright/.env") });
 
 const REPORTS = {
   conversion: runConversion,
-  // Future report types can be added here
+  "aulas-experimentais": runAulasExperimentais,
 };
 
 async function main() {

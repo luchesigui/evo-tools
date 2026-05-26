@@ -130,9 +130,8 @@ export async function run(options = {}) {
     console.log("Extraction completed successfully!");
     console.log(`Spreadsheet Saved: ${fileName}`);
     console.log(`File Size: ${stats.size} bytes`);
-    console.log(`File Path: ${filePath}`);
     console.log("-----------------------------------------");
-
+    return filePath;
   } catch (error) {
     console.error("\nFATAL ERROR DURING EXTRACTION:");
     console.error(error.message);

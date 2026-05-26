@@ -3,6 +3,7 @@ import { delay, waitAndClick } from "./helpers/browser.js";
 import { loginToEvo } from "./modules/auth.js";
 import { checkIfItIsClient, searchContact } from "./modules/search.js";
 import { navigateToOpportunities } from "./modules/opportunities.js";
+import { navigateToExperimentalClasses } from "./modules/experimental-classes.js";
 import {
   selectDateInDatePicker,
   uncheckEspeciais,
@@ -38,6 +39,7 @@ export {
   delay,
   waitAndClick,
   navigateToOpportunities,
+  navigateToExperimentalClasses,
   selectDateInDatePicker,
   uncheckEspeciais,
   triggerSearch,
