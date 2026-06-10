@@ -1,0 +1,11 @@
+{
+  "name": "evo-kommo-sync",
+  "version": "1.0.0",
+  "description": "Sincronização de clientes do Evo (XLSX) com Kommo CRM via API",
+  "private": true,
+  "scripts": {
+    "install": "python3 -m venv venv && ./venv/bin/pip install -r requirements.txt",
+    "start": "./venv/bin/python sync.py",
+    "clean": "rm -rf __pycache__ .pytest_cache venv"
+  }
+}
