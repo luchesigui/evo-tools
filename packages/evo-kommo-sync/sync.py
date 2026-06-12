@@ -112,6 +112,8 @@ class KommoAPI:
                     else:
                         raise Exception("Não foi possível renovar o token")
                 
+                if response.status_code >= 400:
+                    self.logger.error(f"Resposta de erro da API: {response.text}")
                 response.raise_for_status()
                 time.sleep(RATE_LIMIT_DELAY)  # Rate limiting preventivo
                 return response
@@ -126,6 +128,9 @@ class KommoAPI:
     
     def refresh_access_token(self) -> bool:
         """Renova o access token usando o refresh token."""
+        if not self.refresh_token:
+            self.logger.warning("Nenhum refresh token disponível para renovação.")
+            return False
         try:
             data = {
                 'client_id': self.client_id,
@@ -186,8 +191,7 @@ class KommoAPI:
         
         field_data = [{
             'name': 'Evo ID',
-            'type': 'text',
-            'code': 'evo_id'
+            'type': 'text'
         }]
         
         response = self._make_request('POST', '/api/v4/contacts/custom_fields', json=field_data)
@@ -234,6 +238,33 @@ class KommoAPI:
         
         contacts = data.get('_embedded', {}).get('contacts', [])
         return contacts[0] if contacts else None
+
+    def get_all_contacts(self) -> List[Dict[str, Any]]:
+        """Busca todos os contatos do Kommo de forma paginada."""
+        contacts = []
+        page = 1
+        limit = 250
+        
+        while True:
+            self.logger.info(f"Buscando contatos do Kommo (página {page})...")
+            try:
+                response = self._make_request('GET', '/api/v4/contacts', params={'page': page, 'limit': limit})
+                if response.status_code == 204:
+                    self.logger.debug(f"Página {page} retornou 204 No Content. Fim da paginação.")
+                    break
+                data = response.json()
+                page_contacts = data.get('_embedded', {}).get('contacts', [])
+                if not page_contacts:
+                    break
+                contacts.extend(page_contacts)
+                if len(page_contacts) < limit:
+                    break
+                page += 1
+            except Exception as e:
+                self.logger.error(f"Erro ao buscar contatos do Kommo na página {page}: {e}")
+                break
+                
+        return contacts
     
     def create_contacts(self, contacts_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Cria múltiplos contatos."""
@@ -246,6 +277,13 @@ class KommoAPI:
         response = self._make_request('PATCH', '/api/v4/contacts', json=contacts_data)
         data = response.json()
         return data.get('_embedded', {}).get('contacts', [])
+
+    def create_leads(self, leads_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Cria múltiplos leads."""
+        response = self._make_request('POST', '/api/v4/leads', json=leads_data)
+        data = response.json()
+        return data.get('_embedded', {}).get('leads', [])
+
     
     def create_lead_for_contact(self, contact_id: int, contact_name: str) -> Optional[Dict[str, Any]]:
         """Cria um lead vinculado a um contato no pipeline 'Alunos'."""
@@ -297,29 +335,68 @@ def sanitize_phone(phone: str) -> str:
     return re.sub(r'\D', '', str(phone))
 
 
+def get_contact_phone(contact: Dict[str, Any], phone_field_id: Optional[int]) -> Optional[str]:
+    """Extrai e sanitiza o telefone de um contato do Kommo."""
+    custom_fields = contact.get('custom_fields_values') or []
+    for cf in custom_fields:
+        if phone_field_id and cf.get('field_id') == phone_field_id:
+            values = cf.get('values') or []
+            if values:
+                return sanitize_phone(values[0].get('value') or '')
+        elif not phone_field_id and cf.get('field_code') == 'PHONE':
+            values = cf.get('values') or []
+            if values:
+                return sanitize_phone(values[0].get('value') or '')
+    return None
+
+
+def build_contacts_lookup(contacts: List[Dict[str, Any]], phone_field_id: Optional[int]) -> Dict[str, Dict[str, Any]]:
+    """Cria um dicionário mapeando telefone sanitizado para o contato do Kommo."""
+    lookup = {}
+    for contact in contacts:
+        phone = get_contact_phone(contact, phone_field_id)
+        if phone:
+            lookup[phone] = contact
+    return lookup
+
+
 def fetch_members_from_evo_api(api_url: str, user: str, password: str, status_filter: Optional[str] = "Active") -> List[Cliente]:
     """Busca membros da API do Evo usando paginação e retorna uma lista de Cliente."""
     logger = logging.getLogger(__name__)
     logger.info(f"Buscando membros da API do Evo: {api_url}")
     
     clientes = []
-    take = 250
+    take = 150
     skip = 0
     endpoint = f"{api_url.rstrip('/')}/api/v2/members"
     
     while True:
         try:
             logger.info(f"Carregando lote da API do Evo (skip={skip}, take={take})...")
-            response = requests.get(
-                endpoint,
-                auth=(user, password),
-                params={"take": take, "skip": skip},
-                timeout=30
-            )
             
-            if response.status_code != 200:
-                logger.error(f"Erro ao buscar membros da API do Evo: Código {response.status_code} - {response.text}")
-                raise Exception(f"Evo API error: {response.status_code}")
+            # Faz o request com retry para rate limit (429) e timeout
+            response = None
+            for attempt in range(5):
+                response = requests.get(
+                    endpoint,
+                    auth=(user, password),
+                    params={"take": take, "skip": skip},
+                    timeout=30
+                )
+                
+                if response.status_code == 429:
+                    wait_time = 15 * (attempt + 1)
+                    logger.warning(f"Rate limit da API do Evo atingido (429). Aguardando {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                    
+                if response.status_code != 200:
+                    logger.error(f"Erro ao buscar membros da API do Evo: Código {response.status_code} - {response.text}")
+                    raise Exception(f"Evo API error: {response.status_code}")
+                    
+                break
+            else:
+                raise Exception("Falha ao consultar API do Evo após múltiplas tentativas (rate limit)")
                 
             data = response.json()
             if not data:
@@ -382,7 +459,7 @@ def fetch_members_from_evo_api(api_url: str, user: str, password: str, status_fi
                 break
                 
             skip += take
-            time.sleep(0.2)  # Delay preventivo para evitar sobrecarga no servidor do Evo
+            time.sleep(1.5)  # Delay preventivo para evitar sobrecarga no servidor do Evo (limite de 40 req/min)
             
         except Exception as e:
             logger.error(f"Erro na requisição à API do Evo: {e}")
@@ -440,7 +517,7 @@ def create_update_contact_data(contact_id: int, cliente: Cliente, kommo_api: Kom
     return contact_data
 
 
-def process_clientes_batch(clientes: List[Cliente], kommo_api: KommoAPI, stats: SyncStats):
+def process_clientes_batch(clientes: List[Cliente], kommo_api: KommoAPI, stats: SyncStats, contacts_lookup: Dict[str, Dict[str, Any]]):
     """Processa um lote de clientes."""
     logger = logging.getLogger(__name__)
     
@@ -450,12 +527,12 @@ def process_clientes_batch(clientes: List[Cliente], kommo_api: KommoAPI, stats: 
     # Processa cada cliente
     for cliente in clientes:
         try:
-            # Busca contato existente
-            existing_contact = kommo_api.search_contact_by_phone(cliente.telefone_sanitizado)
+            # Busca contato existente no cache em memória
+            existing_contact = contacts_lookup.get(cliente.telefone_sanitizado)
             
             if existing_contact:
                 # Contato existe - preparar para atualização
-                logger.info(f"Contato encontrado para {cliente.nome} (telefone: {cliente.telefone_sanitizado})")
+                logger.info(f"Contato encontrado no cache para {cliente.nome} (telefone: {cliente.telefone_sanitizado})")
                 
                 update_data = create_update_contact_data(
                     existing_contact['id'], cliente, kommo_api
@@ -463,7 +540,7 @@ def process_clientes_batch(clientes: List[Cliente], kommo_api: KommoAPI, stats: 
                 contacts_to_update.append(update_data)
             else:
                 # Contato não existe - preparar para criação
-                logger.info(f"Criando novo contato para {cliente.nome} (telefone: {cliente.telefone_sanitizado})")
+                logger.info(f"Contato não encontrado no cache para {cliente.nome} (telefone: {cliente.telefone_sanitizado})")
                 
                 create_data = create_contact_data(cliente, kommo_api)
                 contacts_to_create.append((create_data, cliente))
@@ -478,19 +555,37 @@ def process_clientes_batch(clientes: List[Cliente], kommo_api: KommoAPI, stats: 
             create_data_list = [data for data, _ in contacts_to_create]
             created_contacts = kommo_api.create_contacts(create_data_list)
             
+            # Prepara lista de leads para criação em lote
+            leads_to_create = []
+            
             # Cria leads para os contatos criados
             for i, created_contact in enumerate(created_contacts):
                 cliente = contacts_to_create[i][1]
                 logger.info(f"Contato criado: {cliente.nome} (ID: {created_contact['id']})")
                 stats.criados += 1
                 
-                # Cria lead vinculado
+                # Atualiza lookup com o novo contato para evitar duplicados em lotes seguintes
+                contacts_lookup[cliente.telefone_sanitizado] = created_contact
+                
+                # Prepara o lead se os IDs do pipeline estiverem disponíveis
                 if kommo_api.alunos_pipeline_id and kommo_api.ativo_stage_id:
-                    lead = kommo_api.create_lead_for_contact(
-                        created_contact['id'], cliente.nome
-                    )
-                    if lead:
-                        logger.info(f"Lead criado para {cliente.nome} (ID: {lead.get('id')})")
+                    leads_to_create.append({
+                        'name': f"Lead - {cliente.nome}",
+                        'status_id': kommo_api.ativo_stage_id,
+                        'pipeline_id': kommo_api.alunos_pipeline_id,
+                        '_embedded': {
+                            'contacts': [{'id': created_contact['id']}]
+                        }
+                    })
+            
+            # Executa criação de leads em lote
+            if leads_to_create:
+                try:
+                    created_leads = kommo_api.create_leads(leads_to_create)
+                    for lead in created_leads:
+                        logger.info(f"Lead criado: ID {lead.get('id')}")
+                except Exception as e:
+                    logger.error(f"Erro ao criar leads em lote: {e}")
                 
         except Exception as e:
             logger.error(f"Erro ao criar contatos: {e}")
@@ -512,6 +607,8 @@ def process_clientes_batch(clientes: List[Cliente], kommo_api: KommoAPI, stats: 
 def main():
     """Função principal do script."""
     parser = argparse.ArgumentParser(description='Sincroniza clientes do Evo com Kommo CRM')
+    parser.add_argument('--mode', choices=['sync', 'list-evo', 'list-kommo', 'compare'], default='sync',
+                       help='Modo de execução do script (default: sync)')
     parser.add_argument('--dry-run', action='store_true', 
                        help='Executa simulação sem fazer alterações')
     parser.add_argument('--verbose', '-v', action='store_true',
@@ -535,75 +632,178 @@ def main():
         # Carregar variáveis de ambiente
         load_dotenv()
         
-        required_vars = [
-            'KOMMO_DOMAIN', 'KOMMO_CLIENT_ID', 'KOMMO_CLIENT_SECRET', 
-            'KOMMO_ACCESS_TOKEN', 'KOMMO_REFRESH_TOKEN',
-            'EVO_API_USER', 'EVO_API_PASSWORD'
-        ]
+        mode = args.mode
         
-        for var in required_vars:
-            if not os.getenv(var):
-                raise ValueError(f"Variável de ambiente obrigatória não encontrada: {var}")
+        # Validar variáveis de ambiente com base no modo selecionado
+        if mode in ['sync', 'list-evo', 'compare']:
+            evo_required = ['EVO_API_USER', 'EVO_API_PASSWORD']
+            for var in evo_required:
+                if not os.getenv(var):
+                    raise ValueError(f"Variável de ambiente obrigatória para o Evo não encontrada: {var}")
+                    
+        if mode in ['sync', 'list-kommo', 'compare']:
+            kommo_required = [
+                'KOMMO_DOMAIN', 'KOMMO_CLIENT_ID', 'KOMMO_CLIENT_SECRET', 
+                'KOMMO_ACCESS_TOKEN'
+            ]
+            for var in kommo_required:
+                if not os.getenv(var):
+                    raise ValueError(f"Variável de ambiente obrigatória para o Kommo não encontrada: {var}")
         
         if args.dry_run:
             logger.info("=== MODO DRY RUN ATIVADO ===")
-        
-        # Inicializar API do Kommo
-        kommo_api = KommoAPI(
-            domain=os.getenv('KOMMO_DOMAIN'),
-            client_id=os.getenv('KOMMO_CLIENT_ID'),
-            client_secret=os.getenv('KOMMO_CLIENT_SECRET'),
-            access_token=os.getenv('KOMMO_ACCESS_TOKEN'),
-            refresh_token=os.getenv('KOMMO_REFRESH_TOKEN'),
-            dry_run=args.dry_run
-        )
-        
-        kommo_api.initialize()
-        
-        # Buscar clientes da API do Evo
-        evo_url = os.getenv('EVO_API_URL', 'https://evo-integracao-api.w12app.com.br')
-        evo_user = os.getenv('EVO_API_USER')
-        evo_pass = os.getenv('EVO_API_PASSWORD')
-        evo_status = os.getenv('EVO_MEMBER_STATUS', 'Active')
-        
-        clientes = fetch_members_from_evo_api(evo_url, evo_user, evo_pass, evo_status)
-        
-        # Estatísticas
-        stats = SyncStats(total=len(clientes))
-        
-        logger.info(f"Iniciando sincronização de {stats.total} clientes...")
-        
-        # Processar em lotes
-        batch_size = min(args.batch_size, MAX_BATCH_SIZE)
-        for i in range(0, len(clientes), batch_size):
-            batch = clientes[i:i + batch_size]
-            logger.info(f"Processando lote {i//batch_size + 1} ({len(batch)} clientes)")
+
+        # 1. MODO LISTAR ALUNOS EVO
+        if mode == 'list-evo':
+            evo_url = os.getenv('EVO_API_URL', 'https://evo-integracao-api.w12app.com.br')
+            evo_user = os.getenv('EVO_API_USER')
+            evo_pass = os.getenv('EVO_API_PASSWORD')
+            evo_status = os.getenv('EVO_MEMBER_STATUS', 'Active')
             
-            process_clientes_batch(batch, kommo_api, stats)
+            clientes = fetch_members_from_evo_api(evo_url, evo_user, evo_pass, evo_status)
             
-            # Pequeno delay entre lotes
-            if i + batch_size < len(clientes):
-                time.sleep(RATE_LIMIT_DELAY)
-        
-        # Relatório final
-        logger.info("=== RELATÓRIO FINAL ===")
-        logger.info(f"Total de clientes processados: {stats.total}")
-        logger.info(f"Contatos criados: {stats.criados}")
-        logger.info(f"Contatos atualizados: {stats.atualizados}")
-        logger.info(f"Erros: {stats.erros}")
-        logger.info(f"Sucesso: {stats.criados + stats.atualizados}")
-        
-        if args.dry_run:
-            logger.info("=== SIMULAÇÃO CONCLUÍDA ===")
-        
-        return 0
+            logger.info("\n=== LISTA DE ALUNOS EVO ===")
+            for idx, c in enumerate(clientes, 1):
+                logger.info(f"{idx:03d}. ID: {c.id_cliente:<6} | Nome: {c.nome:<30} | Telefone: {c.telefone_sanitizado:<15} | Status: {c.status}")
+            
+            logger.info(f"\nTotal: {len(clientes)} alunos ativos encontrados no Evo.")
+            return 0
+
+        # 2. MODO LISTAR CONTATOS KOMMO
+        elif mode == 'list-kommo':
+            kommo_api = KommoAPI(
+                domain=os.getenv('KOMMO_DOMAIN'),
+                client_id=os.getenv('KOMMO_CLIENT_ID'),
+                client_secret=os.getenv('KOMMO_CLIENT_SECRET'),
+                access_token=os.getenv('KOMMO_ACCESS_TOKEN'),
+                refresh_token=os.getenv('KOMMO_REFRESH_TOKEN'),
+                dry_run=args.dry_run
+            )
+            kommo_api.initialize()
+            
+            contacts = kommo_api.get_all_contacts()
+            
+            logger.info("\n=== LISTA DE CONTATOS KOMMO CRM ===")
+            for idx, contact in enumerate(contacts, 1):
+                phone = get_contact_phone(contact, kommo_api.phone_field_id)
+                logger.info(f"{idx:03d}. ID: {contact.get('id'):<12} | Nome: {contact.get('name'):<30} | Telefone: {phone or 'Não cadastrado'}")
+                
+            logger.info(f"\nTotal: {len(contacts)} contatos encontrados no Kommo CRM.")
+            return 0
+
+        # 3. MODO COMPARAR EVO vs KOMMO (INTEGRAÇÃO COMPLETA - SEM GRAVAÇÃO)
+        elif mode == 'compare':
+            kommo_api = KommoAPI(
+                domain=os.getenv('KOMMO_DOMAIN'),
+                client_id=os.getenv('KOMMO_CLIENT_ID'),
+                client_secret=os.getenv('KOMMO_CLIENT_SECRET'),
+                access_token=os.getenv('KOMMO_ACCESS_TOKEN'),
+                refresh_token=os.getenv('KOMMO_REFRESH_TOKEN'),
+                dry_run=args.dry_run
+            )
+            kommo_api.initialize()
+            
+            evo_url = os.getenv('EVO_API_URL', 'https://evo-integracao-api.w12app.com.br')
+            evo_user = os.getenv('EVO_API_USER')
+            evo_pass = os.getenv('EVO_API_PASSWORD')
+            evo_status = os.getenv('EVO_MEMBER_STATUS', 'Active')
+            
+            logger.info("Buscando dados das duas APIs para comparação...")
+            clientes = fetch_members_from_evo_api(evo_url, evo_user, evo_pass, evo_status)
+            contacts = kommo_api.get_all_contacts()
+            contacts_lookup = build_contacts_lookup(contacts, kommo_api.phone_field_id)
+            
+            cadastrados = []
+            pendentes = []
+            
+            for cliente in clientes:
+                existing = contacts_lookup.get(cliente.telefone_sanitizado)
+                if existing:
+                    cadastrados.append((cliente, existing))
+                else:
+                    pendentes.append(cliente)
+            
+            logger.info("\n=============================================")
+            logger.info("           RELATÓRIO DE COMPARAÇÃO           ")
+            logger.info("=============================================")
+            logger.info(f"Total de alunos ativos no Evo  : {len(clientes)}")
+            logger.info(f"Total de contatos no Kommo CRM : {len(contacts)}")
+            logger.info(f"Alunos já cadastrados no Kommo : {len(cadastrados)}")
+            logger.info(f"Alunos PENDENTES (Não no Kommo): {len(pendentes)}")
+            logger.info("=============================================\n")
+            
+            if cadastrados:
+                logger.info("--- ALUNOS JÁ CADASTRADOS NO KOMMO ---")
+                for idx, (cli, con) in enumerate(cadastrados, 1):
+                    logger.info(f"{idx:03d}. {cli.nome:<30} (Evo ID: {cli.id_cliente:<6}) <-> {con.get('name'):<30} (Kommo ID: {con.get('id'):<12}) | Tel: {cli.telefone_sanitizado}")
+            
+            if pendentes:
+                logger.info("\n--- ALUNOS PENDENTES (A SEREM INSERIDOS NO KOMMO) ---")
+                for idx, cli in enumerate(pendentes, 1):
+                    logger.info(f"{idx:03d}. {cli.nome:<30} (Evo ID: {cli.id_cliente:<6}) | Tel: {cli.telefone_sanitizado}")
+            
+            return 0
+
+        # 4. MODO SINCRONIZAR (GRAVAÇÃO EM LOTE OTIMIZADA)
+        elif mode == 'sync':
+            kommo_api = KommoAPI(
+                domain=os.getenv('KOMMO_DOMAIN'),
+                client_id=os.getenv('KOMMO_CLIENT_ID'),
+                client_secret=os.getenv('KOMMO_CLIENT_SECRET'),
+                access_token=os.getenv('KOMMO_ACCESS_TOKEN'),
+                refresh_token=os.getenv('KOMMO_REFRESH_TOKEN'),
+                dry_run=args.dry_run
+            )
+            kommo_api.initialize()
+            
+            evo_url = os.getenv('EVO_API_URL', 'https://evo-integracao-api.w12app.com.br')
+            evo_user = os.getenv('EVO_API_USER')
+            evo_pass = os.getenv('EVO_API_PASSWORD')
+            evo_status = os.getenv('EVO_MEMBER_STATUS', 'Active')
+            
+            logger.info("Buscando clientes ativos do Evo...")
+            clientes = fetch_members_from_evo_api(evo_url, evo_user, evo_pass, evo_status)
+            
+            logger.info("Buscando contatos existentes do Kommo CRM para otimização em cache...")
+            contacts = kommo_api.get_all_contacts()
+            contacts_lookup = build_contacts_lookup(contacts, kommo_api.phone_field_id)
+            
+            # Estatísticas
+            stats = SyncStats(total=len(clientes))
+            
+            logger.info(f"Iniciando sincronização de {stats.total} clientes...")
+            
+            # Processar em lotes
+            batch_size = min(args.batch_size, MAX_BATCH_SIZE)
+            for i in range(0, len(clientes), batch_size):
+                batch = clientes[i:i + batch_size]
+                logger.info(f"Processando lote {i//batch_size + 1} ({len(batch)} clientes)")
+                
+                process_clientes_batch(batch, kommo_api, stats, contacts_lookup)
+                
+                # Pequeno delay entre lotes
+                if i + batch_size < len(clientes):
+                    time.sleep(RATE_LIMIT_DELAY)
+            
+            # Relatório final
+            logger.info("=== RELATÓRIO FINAL ===")
+            logger.info(f"Total de clientes processados: {stats.total}")
+            logger.info(f"Contatos criados: {stats.criados}")
+            logger.info(f"Contatos atualizados: {stats.atualizados}")
+            logger.info(f"Erros: {stats.erros}")
+            logger.info(f"Sucesso: {stats.criados + stats.atualizados}")
+            
+            if args.dry_run:
+                logger.info("=== SIMULAÇÃO CONCLUÍDA ===")
+            
+            return 0
         
     except KeyboardInterrupt:
-        logger.info("Sincronização cancelada pelo usuário")
+        logger.info("Operação cancelada pelo usuário")
         return 1
         
     except Exception as e:
-        logger.error(f"Erro durante a sincronização: {e}")
+        logger.error(f"Erro durante a execução: {e}")
         return 1
 
 
