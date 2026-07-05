@@ -6,6 +6,7 @@
   "scripts": {
     "install": "python3 -m venv venv && ./venv/bin/pip install -r requirements.txt",
     "start": "./venv/bin/python broadcast.py",
+    "tag-leads": "./venv/bin/python tag_leads.py",
     "clean": "rm -rf __pycache__ .pytest_cache venv"
   }
 }

@@ -92,13 +92,47 @@ Exemplo:
 Olá {nome}! Bem-vindo ao nosso sistema. Sua mensagem personalizada aqui.
 ```
 
+## Tagueamento de Leads (Totalpass)
+
+O pacote inclui um script adicional `tag_leads.py` para taguear contatos e seus leads correspondentes no Kommo CRM a partir de um arquivo CSV (como `~/Desktop/CLIENTES.csv`).
+
+### Funcionamento
+1. Lê a lista de contatos do CSV (delimitado por `,` ou `;`).
+2. Procura os cabeçalhos de coluna de Nome e Telefone de forma inteligente.
+3. Busca os contatos correspondentes no Kommo CRM com seus leads vinculados (`with=leads`).
+4. Aplica a tag (padrão: `Totalpass`) nos contatos e leads encontrados em lotes (máximo de 50 por requisição) para respeitar os limites da API.
+
+### Como Executar
+
+#### Usando o npm:
+```bash
+npm run tag-leads
+# ou especificando argumentos personalizados
+npm run tag-leads -- --csv ~/Desktop/CLIENTES.csv --tag Totalpass
+```
+
+#### Usando Python diretamente:
+```bash
+# Execução padrão (usa ~/Desktop/CLIENTES.csv e tag "Totalpass")
+./venv/bin/python tag_leads.py
+
+# Simulação (dry-run) com logs detalhados
+./venv/bin/python tag_leads.py --dry-run --verbose
+
+# Especificando CSV e tag personalizados
+./venv/bin/python tag_leads.py --csv /caminho/do/arquivo.csv --tag OutraTag
+```
+
 ## Fluxo de Execução
 
 1. **Leitura do XLSX**: Carrega lista de contatos do arquivo
-2. **Busca no Kommo**: Para cada telefone, busca o contato correspondente no CRM
-3. **Criação de Chats**: Para contatos encontrados, cria um chat via Chats API
-4. **Envio de Mensagens**: Envia a mensagem para cada chat criado
-5. **Relatório**: Exibe estatísticas finais do envio
+2. **Leitura do CSV (no script de tags)**: Carrega contatos e resolve o caminho do arquivo
+3. **Busca no Kommo**: Para cada telefone, busca o contato correspondente no CRM
+4. **Criação de Chats (no broadcast)**: Para contatos encontrados, cria um chat via Chats API
+5. **Envio de Mensagens (no broadcast)**: Envia a mensagem para cada chat criado
+6. **Tagueamento (no script de tags)**: Adiciona a tag aos contatos e leads encontrados em lotes
+7. **Relatório**: Exibe estatísticas finais da execução
+
 
 ## Relatório de Envio
 
